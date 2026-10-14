@@ -1,0 +1,16 @@
+{
+  "name": "windsurf-figures",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20.10" },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "audit": "node build.mjs --audit",
+    "site": "node site/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2"
+  }
+}
