@@ -1,0 +1,35 @@
+{
+  "fig": "Fig 3",
+  "title": "Base position, steered by tilt",
+  "hint": "Move across · ← → · Home",
+  "label": "A windsurf board floats in a round tank of water on a pivot at its centreboard, with the rig up and the sail flagging downwind in the breeze from a fan. A wooden mannequin stands upwind of the mast, holding it with both hands. A lit plumb line hangs from the sail's centre of effort. Tilting the rig toward the nose or the tail moves the line of the sail's push ahead of or behind the centreboard, and the board turns.",
+  "aria": "Base position model. Left and right arrows tilt the rig toward the tail and the nose; Home sets it upright.",
+  "intro": "<h1>Uphauling and getting going · 3 of 3</h1>The rig is up and the sail flags downwind. Before you sheet in, tilting the rig toward the nose or the tail already steers the board.",
+  "caption": "Model at 1:1.8 in a steady 8-knot breeze. The flagging sail's drag acts downwind at its centre of effort; the water pushes back at the centreboard. How far apart those two lines of push lie, across the wind, is the lever that turns the board.",
+  "keys": [
+    { "mark": "lit", "label": "Plumb line from the centre of effort" },
+    { "mark": "raised", "label": "Centreboard pivot (the CLR)" }
+  ],
+  "controls": {
+    "tilt": { "label": "Tilt", "tail": "toward the tail {deg}°", "nose": "toward the nose {deg}°", "upright": "upright" }
+  },
+  "readout": "{heading}° off the wind · moment {moment} N·m · {doing}",
+  "doing": { "hold": "holding", "away": "bearing away {rate}°/s", "up": "heading up {rate}°/s" },
+  "why": {
+    "push": "The flagging sail pushes {drag} N downwind at its centre of effort. That line of push passes {lever} cm {side} the centreboard, so the couple, {drag} N × {leverM} m, {turn}",
+    "turn": { "away": "turns the nose away from the wind: the board bears away.", "up": "turns the nose toward the wind: the board heads up.", "none": "is close to zero, and the board holds its heading." },
+    "side": { "ahead": "ahead of", "behind": "behind" },
+    "close": "Close to the wind the sail's push runs along the board, through the centreboard, so tilting the rig hardly turns it any more."
+  },
+  "tasks": [
+    { "id": "f3-hold", "button": "01 Hold across", "title": "Hold the board across the wind.", "say": "Keep it on 90°, ±8°, for 3 seconds. Where must the plumb line hang?", "done": "Held. With the push lined up through the centreboard there is no couple, and nothing turns the board. The mast foot sits ahead of the centreboard, so the rig has to lean a little toward the tail to get there.", "hold": 3 },
+    { "id": "f3-up", "button": "02 Head up", "title": "Head up to 50°.", "say": "Turn the nose toward the wind and hold it there, ±8°.", "done": "You tilted the rig toward the tail: the sail's push moved behind the centreboard and swung the tail away from the wind, so the nose came up.", "hold": 1.5 },
+    { "id": "f3-away", "button": "03 Bear away", "title": "Bear away to 150°.", "say": "Turn the nose away from the wind, toward having the wind behind you, and hold it there, ±8°.", "done": "Tilted toward the nose, the push moved ahead of the centreboard and pushed the nose downwind. To stop, you brought the rig back.", "hold": 1.5 }
+  ],
+  "mistake": {
+    "button": "Try the mistake",
+    "title": "Tilting toward the nose to point closer to the wind.",
+    "say": "Watch: the rig tilts toward the nose, hoping to point higher.",
+    "done": "The board bore away instead. Tilting toward the nose puts the sail's push ahead of the centreboard, and that pushes the nose downwind. To head up, tilt toward the tail."
+  }
+}
