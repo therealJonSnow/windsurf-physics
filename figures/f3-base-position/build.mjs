@@ -2,6 +2,7 @@
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildFigure } from "../../packages/windsurf/build-figure.mjs";
+import { auditStatic } from "../../packages/windsurf/audit-static.mjs";
 import { WIDTH, HEIGHT, P, TELL, CONSOLE, FAN, staticBack, staticMid, staticFront, scene } from "./figure.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -28,4 +29,11 @@ export async function build(options = {}) {
   return buildFigure({ id: "f3-base-position", dir: HERE, width: WIDTH, height: HEIGHT, svgBody: svgBody(), controls: CONTROLS, verify: VERIFY, ...options });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await build();
+export async function audit() {
+  return auditStatic(P, () => { staticBack(); staticMid(); staticFront(); }, { label: "f3-base-position" });
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  if (process.argv.includes("--audit")) await audit();
+  else await build();
+}

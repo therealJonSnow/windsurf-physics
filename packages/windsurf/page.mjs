@@ -43,7 +43,7 @@ export const WS_CSS = `
 .ws-verify td:nth-child(2){white-space:nowrap;color:var(--anatomy-strong);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .ws-intro{margin:0 0 18px;color:var(--anatomy-text)}
 .ws-intro h1{font-size:15px;font-weight:600;margin:0 0 6px;color:var(--anatomy-strong)}
-@media (max-width:560px){.ws-row{grid-template-columns:56px 1fr 112px}.iso-plate{overflow:hidden}.iso-stage svg{width:116%;margin:-3% -8% -2%}}
+@media (max-width:560px){.ws-row{grid-template-columns:56px 1fr 112px}.ws-root .iso-plate{padding:44px 8px 78px}.ws-root .iso-plate-corner[data-corner="readout"]{left:0;white-space:normal;text-align:right;line-height:1.35}.ws-root .iso-plate-corner[data-corner="hint"]{bottom:34px}}
 `;
 
 // Controls: { type: "range", name, label, min, max, step, value } | { type: "choice", name, label, options: [{ value, label }] }

@@ -106,6 +106,7 @@ export function mount(root, { captions, store = false }) {
   };
   fig.onSteer = () => {};
 
+  fig.probe = () => ({ heading: state.heading, rate: state.rate, tilt, target });
   draw(performance.now(), true);
   words(solve, 0);
   fig.why(fill(W.push, { drag: N(solve.drag), lever: 0, leverM: "0.00", side: W.side.ahead, turn: W.turn.none }), 0, true);

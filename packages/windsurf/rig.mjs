@@ -151,7 +151,9 @@ export function makeBoard({ Zw }) {
     });
   }
 
-  return { Zw, Zd, ZF, deck, straps };
+  // the deck only changes with the board's projection: keep the last one
+  const memo = (f) => { let key = null, value = null; return (P, ...rest) => { const k2 = `${P.azimuth}|${P.origin[0]}|${P.origin[1]}|${P.scale}|${JSON.stringify(rest)}`; if (k2 !== key) { key = k2; value = f(P, ...rest); } return value; }; };
+  return { Zw, Zd, ZF, deck: memo(deck), straps: memo(straps) };
 }
 
 // ---- the rig ----
@@ -342,7 +344,7 @@ export function drawRig(P, frame, board, opts = {}) {
   const arm = (side) => {
     const pts = [];
     for (let i = 0; i <= 22; i++) pts.push(armAt(side, 3.4 + ((BOOM_END - 3.4) * i) / 22));
-    return clipRuns(pts, wetLevel).map((run) => T.tubePieces(run, 1.2, P, { maxLength: 40, spacing: 4.5, caps: run.length !== pts.length ? true : false, rings: side === nearArm ? { pitch: 2.6, steps: 6, fade: [0.12, 0.6] } : null }).map((piece) => T.tubeSvg(piece, { tone: "hi" })).join("")).join("");
+    return clipRuns(pts, wetLevel).map((run) => T.tubePieces(run, 1.2, P, { maxLength: 40, spacing: 4.5, caps: run.length !== pts.length ? true : false, rings: side === nearArm ? { pitch: 3.4, steps: 4, fade: [0.12, 0.6] } : null }).map((piece) => T.tubeSvg(piece, { tone: "hi" })).join("")).join("");
   };
   const head = R(BOOM_U, 0, 0);
   const Fh = G.frameAlong(head, m);
@@ -386,7 +388,8 @@ export function drawRig(P, frame, board, opts = {}) {
   let plumbSvg = "";
   if (plumb) {
     const cord = `<path class="iso-line ws-plumb" data-tone="lit" d="${path([at(ceAt), at([bob[0], bob[1], bob[2] + 1.1])])}"/>`;
-    plumbSvg = cord + S(G.solidOf([[0, 0.5], [0.5, 1.3], [1.6, 1.3], [3.2, 0.25]], G.frameAlong([bob[0], bob[1], bob[2] + 1.1], [0, 0, -1]), P, { steps: 20 }), { tone: "hi", lit: true, crease: "none" });
+    // the bob: a small collar on the cord and a ball under it
+    plumbSvg = cord + S(G.disc(0, 0.5, 0.6, G.frameAlong([bob[0], bob[1], bob[2] + 1.1], [0, 0, -1]), P, { steps: 12 }), { tone: "hi", lit: true, crease: "none" }) + S(G.sphereOf([bob[0], bob[1], bob[2]], 1.3, P, { steps: 16 }), { tone: "hi", lit: true });
   }
 
   const windward = nearSide(1);

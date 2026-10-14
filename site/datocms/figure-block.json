@@ -1,0 +1,39 @@
+{
+  "_comment": "DatoCMS 'Figure' block model. Create it under Settings → Blocks library with these fields, or import with the DatoCMS CMA client (see README). Lesson pages add it to their modular content field.",
+  "name": "Figure",
+  "api_key": "figure_block",
+  "fields": [
+    {
+      "label": "Figure",
+      "api_key": "figure_name",
+      "field_type": "string",
+      "validators": { "required": {}, "enum": { "values": ["f1-t-position", "f2-uphaul", "f3-base-position"] } },
+      "appearance": { "editor": "string_select", "parameters": { "options": [
+        { "label": "F1 T-position weathervane", "value": "f1-t-position" },
+        { "label": "F2 Uphaul load", "value": "f2-uphaul" },
+        { "label": "F3 Base position steering", "value": "f3-base-position" }
+      ] } }
+    },
+    {
+      "label": "Open challenge",
+      "api_key": "preset_challenge",
+      "field_type": "integer",
+      "hint": "Which challenge opens first (1–5). Leave empty to start on the idle tour.",
+      "validators": { "number_range": { "min": 1, "max": 5 } }
+    },
+    {
+      "label": "Caption override",
+      "api_key": "caption_override",
+      "field_type": "text",
+      "hint": "Replaces the caption under the card. Leave empty to keep the figure's own."
+    },
+    {
+      "label": "Theme",
+      "api_key": "theme",
+      "field_type": "string",
+      "validators": { "enum": { "values": ["auto", "light", "dark"] } },
+      "default_value": "auto"
+    }
+  ],
+  "render": "<ws-figure name=\"{figure_name}\" challenge=\"{preset_challenge}\" caption=\"{caption_override}\" theme=\"{theme}\"></ws-figure> plus <script type=\"module\" src=\"https://YOUR-VERCEL-DEPLOYMENT.vercel.app/{figure_name}.js\"></script>"
+}

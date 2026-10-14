@@ -1,0 +1,36 @@
+{
+  "fig": "Fig 2",
+  "title": "Uphaul load",
+  "hint": "Pull · space · 1 2 3 · L B",
+  "label": "A windsurf board lies across the wind in a pool on a bench, its rig flat on the water downwind. A wooden mannequin stands either side of the mast foot and pulls the rig up by the uphaul line, with a newton meter spliced into the line. On the bench a chart recorder traces the line's tension against the mast angle as the mast rises and the water runs off the sail. A dashed line on the paper marks the tension to stay under.",
+  "aria": "Uphaul model. Space pulls the rig up or starts again; 1, 2 and 3 choose a slow, steady or snatched pull; L and B choose lifting with the legs or bending the back.",
+  "intro": "<h1>Uphauling and getting going · 2 of 3</h1>Pull the rig up slowly, back straight, legs bent: the pull is hardest at the start, and every second you wait lets more water run off the sail.",
+  "caption": "Model at 1:1.8. Moments about the mast foot: the rig's weight and the water on the sail, each on its lever times the cosine of the mast angle, less what the water still carries, plus the rig's inertia and the suction of the water when the sail is torn off quickly. The uphaul's tension is that moment over its own lever, which grows as the mast rises.",
+  "keys": [
+    { "mark": "lit", "label": "Newton meter slider and recorder pen" },
+    { "mark": "dashed", "label": "Tension to stay under" }
+  ],
+  "controls": {
+    "pull": { "label": "Pull", "slow": "slow", "steady": "steady", "snatch": "snatch", "value": "{seconds} s to the top" },
+    "style": { "label": "Lift with", "legs": "legs", "back": "back", "value": "{style}" }
+  },
+  "readout": "tension {tension} N · mast {theta}° · water {water} kg",
+  "why": {
+    "ready": "The rig lies flat with {water} kg of water on the sail. Choose how fast to pull, and with what, then press Pull.",
+    "pulling": "The line pulls on a {lever} cm lever about the mast foot, against {moment} N·m: the rig's weight, {rig} N·m, and the water still on the sail, {wet} N·m{extra}. That takes {tension} N.",
+    "extra": ", plus {dyn} N·m to tear the sail off the water and speed it up",
+    "done": "Up. The pull peaked at {peak} N with the mast at {peakAt}°, {verdict} Your lower back carried up to {back} N·m.",
+    "under": "under the {target} N mark.",
+    "over": "over the {target} N mark."
+  },
+  "tasks": [
+    { "id": "f2-peak", "button": "01 Under the mark", "title": "Raise the rig with the pull under the mark.", "say": "Get the rig up with the peak tension under the dashed line on the recorder.", "done": "A slow pull gives the water time to run off before the sail leaves the water, and asks almost nothing to speed the rig up. The peak stays low.", "hold": 0.3 },
+    { "id": "f2-back", "button": "02 Spare your back", "title": "Do it again, sparing your back.", "say": "Under the mark again, with your lower back carrying less than {backTarget} N·m.", "done": "Back straight and leaning back, your weight sits behind your lower back and balances the line. Bent over, your upper body hangs in front of it and adds to the load.", "hold": 0.3 }
+  ],
+  "mistake": {
+    "button": "Try the mistake",
+    "title": "Snatching the rig up with a bent back.",
+    "say": "Watch the meter, the recorder and the lit lever from the lower back.",
+    "done": "The tension spiked: the water had no time to drain, the sail was torn off the surface, and the rig had to be thrown up. Bent over, the line and your own upper body both pull on your lower back, on that lever."
+  }
+}

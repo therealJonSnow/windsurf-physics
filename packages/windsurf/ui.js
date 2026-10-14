@@ -48,7 +48,10 @@ export function createFigure(root, { id, captions, store = false }) {
     onTask: () => {},
     onMistake: () => null,
     onSteer: () => {},
+    probe: () => ({}),
   };
+  // a read-only window on the model for the checks (scripts/check.mjs): stage.__fig.probe()
+  stage.__fig = fig;
 
   // ---- words ----
   let whyAt = 0, sayLive = "";
@@ -76,7 +79,8 @@ export function createFigure(root, { id, captions, store = false }) {
       if (done) endReplay();
     }
     checkTask(dt);
-    fig.frame = fig.visible && (keep || fig.touring) && !calm ? requestAnimationFrame(tick) : 0;
+    const checking = fig.task >= 0 && !fig.passed;
+    fig.frame = fig.visible && (keep || fig.touring || checking) && !calm ? requestAnimationFrame(tick) : 0;
   }
   fig.run = () => {
     if (!fig.frame && fig.visible) {
@@ -250,7 +254,12 @@ export function createFigure(root, { id, captions, store = false }) {
       if (!force && now - at < cost * 1.25) return false;
       const t0 = performance.now();
       draw();
-      cost = Math.max(10, performance.now() - t0);
+      const took = performance.now() - t0;
+      // the 90th percentile of the last 60 redraws, for the checks
+      (fig.costs ||= []).push(took);
+      if (fig.costs.length > 60) fig.costs.shift();
+      fig.drawCost = [...fig.costs].sort((a, b) => a - b)[Math.floor(0.9 * (fig.costs.length - 1))];
+      cost = Math.max(10, took);
       at = now;
       return true;
     };

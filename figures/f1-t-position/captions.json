@@ -1,0 +1,36 @@
+{
+  "fig": "Fig 1",
+  "title": "T-position, a weathervane",
+  "hint": "Drag the board or the rig · ← → ↑ ↓",
+  "label": "A windsurf board floats in a wide round pool on a bench, its rig lying flat on the water and joined to the board at the mast foot. A fan blows across the pool. The wind's drag on the floating rig swings it about the mast foot until it lies straight downwind, like a weathervane. With the board across the wind the rig settles square to it, in a T. With the board pointing into the wind the rig swings over the tail and the mast comes to rest on the deck.",
+  "aria": "T-position model. Left and right arrows turn the board; up and down arrows swing the rig; Home starts again from a new position.",
+  "intro": "<h1>Uphauling and getting going · 1 of 3</h1>Before you pull the rig up, set the board across the wind with the rig lying downwind of it. The wind holds it there for you.",
+  "caption": "Model at 1:1.8 in a steady 8-knot breeze. The rig floats flat, hinged at the mast foot; the wind's drag on the parts it can reach turns it downwind, and the water slows the swing. Where the rig would cross the board it rests on the deck, and the wet sail's friction on the pad can hold it there.",
+  "keys": [
+    { "mark": "lit", "label": "Target on the rim" },
+    { "mark": "raised", "label": "Mast foot, the hinge" }
+  ],
+  "controls": {
+    "board": { "label": "Board", "value": "{deg}° to the wind" },
+    "rig": { "label": "Rig", "value": "{deg}° to the board" }
+  },
+  "readout": "board {board}° to the wind · rig {rig}° to the board · {state}",
+  "states": { "t": "T-position", "deck": "mast on the deck", "swing": "swinging", "held": "held", "rest": "settled" },
+  "why": {
+    "swing": "The wind's drag on the floating rig acts {lever} m out along the mast, so it turns the rig about the mast foot with {torque} N·m, toward downwind. The water slows the swing.",
+    "t": "The rig lies straight downwind of the mast foot, where the wind has no lever to turn it, and the board is across the wind: the T-position. It stays put, and the rig is on the right side to pull up.",
+    "rest": "The rig has settled downwind, where the wind has no lever on it, but the board is {board}° to the wind. Turn the board across the wind so the rig lies square to it.",
+    "deck": "The mast lies across the deck. The wet sail's friction on the pad holds up to {hold} N·m, more than the wind's {torque} N·m, so the rig stays on the board: you would be pulling it up over the deck.",
+    "held": "You are holding the rig {rho}° off downwind. Let go and the wind's {torque} N·m swings it back."
+  },
+  "tasks": [
+    { "id": "f1-t", "button": "01 Set the T", "title": "Set the T-position.", "say": "From this random start, get the board across the wind and the rig square to it, downwind. Hold it for 2 seconds.", "done": "The rig lies downwind, where the wind has no lever on it, and the board is square to it: the only start that stays put.", "hold": 2 },
+    { "id": "f1-nose", "button": "02 Nose to wind", "title": "Point the board into the wind.", "say": "Turn the nose into the wind, ±15°, and watch where the rig ends up.", "done": "The rig swung downwind, over the tail, and the mast came to rest on the deck. Pulling it up from there means lifting it over the board.", "hold": 1.5 }
+  ],
+  "mistake": {
+    "button": "Try the mistake",
+    "title": "Starting with the rig upwind of the board.",
+    "say": "Watch: the board is across the wind, but the rig lies on the upwind side.",
+    "done": "The wind swung the rig round, over the board, and the mast landed on the deck, where the wet sail's friction holds it. Uphauling would start from the wrong side. Start with the rig downwind."
+  }
+}

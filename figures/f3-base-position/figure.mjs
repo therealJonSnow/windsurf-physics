@@ -18,10 +18,10 @@ export const BOARD = makeBoard({ Zw: TANK.Zw });
 export const FAN = makeFan({ C: [-(TANK.R + 44) * WIND[0], -(TANK.R + 44) * WIND[1] - 40, 58], dir: WIND, r: 34 });
 export const TELL = makeTelltale({ at: [-128, 112], top: 74, dir: WIND });
 export const CONSOLE = makeConsole({
-  plan: { x: 50, y: 108, w: 74, d: 30, r: 5 },
+  plan: { x: 50, y: 108, w: 74, d: 26, r: 5 },
   h: 12,
-  knobs: [{ c: [106, 123], r: 6.4 }],
-  gauge: { c: [74, 123], r: 12, z: 20 },
+  knobs: [{ c: [106, 121], r: 6.4 }],
+  gauge: { c: [74, 121], r: 11.5, z: 20 },
 });
 export const PLATE = { x: -205, y: -150, w: 345, d: 300, r: 12 };
 export const MOMENT_MAX = 15;                                       // N·m at full gauge swing

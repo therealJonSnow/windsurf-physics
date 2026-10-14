@@ -3,7 +3,7 @@
 // pilot page, and the centre of gravity from segment masses. Draw part: turned segments and ball joints,
 // each returned as an item with its own depth so limbs pass in front of and behind the mast and boom.
 // Board frame, model units (x forward from the CLR, y to port, z up).
-import { k, G } from "./kit.mjs";
+import { k, G, T } from "./kit.mjs";
 import { LEN, MASS_SHARE, MASS } from "./physics/sailor.mjs";
 import { UNIT_M, MAST_FOOT } from "./physics/sail.mjs";
 import { halfWidth } from "./physics/hull.mjs";
@@ -148,14 +148,16 @@ export function poseBase(d, rig, board) {
 const S = (paths, style) => k.solidSvg(paths, style);
 
 // A tapered limb from a to b with radii r0, r1, shortened to leave room for the balls at its ends.
+// Drawn as a turned tube (a ribbon with shine and shade, elliptical end caps): a tenth of a lathe's cost.
 function limb(a, b, r0, r1, P, gap0, gap1, tone = "mid") {
   const L = len(sub(b, a));
-  const F = G.frameAlong(a, unit(sub(b, a)));
+  const d = unit(sub(b, a));
   const s0 = gap0, s1 = Math.max(gap0 + 1, L - gap1);
-  const prof = [[s0, r0 * 0.78], [s0 + 0.12 * (s1 - s0), r0, 1], [s0 + 0.5 * (s1 - s0), (r0 + r1) / 2 + 0.25, 1], [s1 - 0.12 * (s1 - s0), r1, 1], [s1, r1 * 0.78]];
-  return S(G.solidOf(prof, F, P, { steps: 24, rims: "ends" }), { tone, crease: "none" });
+  const A = add(a, mul(d, s0)), B = add(a, mul(d, s1));
+  const radius = (t) => (r0 + (r1 - r0) * t) * (0.86 + 0.14 * Math.sin(Math.PI * Math.min(1, Math.max(0, t * 1.15 - 0.05))));
+  return T.tubePieces([A, B], radius, P, { maxLength: 400, spacing: 3 }).map((piece) => T.tubeSvg(piece, { tone })).join("");
 }
-const ball = (c, r, P, tone = "lo") => S(G.sphereOf(c, r, P, { steps: 24 }), { tone });
+const ball = (c, r, P, tone = "lo") => S(G.sphereOf(c, r, P, { steps: 12 }), { tone });
 
 // Items for the painter: each segment and joint with its centre. `extra` styles: { lit: [names] }.
 export function drawMannequin(P, s, { plates = true, board = null, cg = false } = {}) {
@@ -179,7 +181,7 @@ export function drawMannequin(P, s, { plates = true, board = null, cg = false } 
   for (const i of [0, 1]) {
     // leg: foot, ankle, shank, knee, thigh, hip
     const footDir = unit(sub(s.toe[i], s.ankle[i]));
-    put(G.lerp3(s.ankle[i], s.toe[i], 0.5), S(G.solidOf([[0, 1.6], [2, 2.4, 1], [SIZE.foot * 0.55, 2.2, 1], [SIZE.foot * 0.78, 1.2]], G.frameAlong(sub(s.ankle[i], mul(footDir, 2.2)), footDir), P, { steps: 20 }), { tone: "mid", crease: "none" }));
+    put(G.lerp3(s.ankle[i], s.toe[i], 0.5), limb(sub(s.ankle[i], mul(footDir, 2.2)), add(s.ankle[i], mul(footDir, SIZE.foot * 0.62)), 1.9, 1.4, P, 0, 0));
     put(s.ankle[i], ball(s.ankle[i], r.ankle, P), 0.2);
     put(G.lerp3(s.knee[i], s.ankle[i], 0.5), limb(s.knee[i], s.ankle[i], r.shank, 1.8, P, r.knee * 0.7, r.ankle * 0.7));
     put(s.knee[i], ball(s.knee[i], r.knee, P), 0.2);
@@ -190,7 +192,7 @@ export function drawMannequin(P, s, { plates = true, board = null, cg = false } 
     put(G.lerp3(s.elbow[i], s.wrist[i], 0.5), limb(s.elbow[i], s.wrist[i], r.fore, 1.4, P, r.elbow * 0.7, r.wrist * 0.7));
     put(s.wrist[i], ball(s.wrist[i], r.wrist, P), 0.2);
     const hd = unit(sub(s.handTip[i], s.wrist[i]));
-    put(G.lerp3(s.wrist[i], s.handTip[i], 0.5), S(G.solidOf([[0, 1.2], [1.5, 1.9, 1], [SIZE.hand * 0.55, 2.0, 1], [SIZE.hand * 0.85, 1.4, 1], [SIZE.hand, 0.6]], G.frameAlong(add(s.wrist[i], mul(hd, 0.8)), hd), P, { steps: 18 }), { tone: "mid", crease: "none" }));
+    put(G.lerp3(s.wrist[i], s.handTip[i], 0.5), limb(add(s.wrist[i], mul(hd, 0.8)), add(s.wrist[i], mul(hd, SIZE.hand)), 1.7, 1.2, P, 0, 0));
     put(s.shoulder[i], ball(s.shoulder[i], 2.8, P), 0.3);
   }
   // pelvis, waist ball, chest, neck, head
@@ -200,7 +202,7 @@ export function drawMannequin(P, s, { plates = true, board = null, cg = false } 
   const Lc = SIZE.torso;
   put(G.lerp3(s.waist, s.chestTop, 0.55), S(G.solidOf([[0.34 * Lc, 5.0], [0.42 * Lc, 7.4, 1], [0.66 * Lc, 9.2, 1], [0.86 * Lc, 8.6, 1], [0.98 * Lc, 6.0, 1], [1.04 * Lc, 3.0]], Ft, P, { steps: 36 }), { tone: "mid", crease: "none" }), 0.6);
   const neckBase = add(s.chestTop, mul(s.torso, 1.2));
-  put(add(neckBase, mul(s.headDir, 2.5)), S(G.solidOf([[0, 2.0], [SIZE.neck + 1.5, 1.8]], G.frameAlong(neckBase, s.headDir), P, { steps: 18 }), { tone: "mid", crease: "none" }), 0.7);
+  put(add(neckBase, mul(s.headDir, 2.5)), limb(neckBase, add(neckBase, mul(s.headDir, SIZE.neck + 1.5)), 2.0, 1.8, P, 0, 0), 0.7);
   const Fh = G.frameAlong(add(s.head, mul(s.headDir, -0.5 * SIZE.head)), s.headDir);
   put(s.head, S(G.solidOf([[0, 1.6], [0.8, 3.6, 1], [0.28 * SIZE.head, 5.0, 1], [0.6 * SIZE.head, 5.6, 1], [0.86 * SIZE.head, 4.4, 1], [SIZE.head, 1.2]], Fh, P, { steps: 32 }), { tone: "mid", crease: "none" }), 0.8);
   if (cg) {
