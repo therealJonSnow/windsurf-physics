@@ -162,7 +162,8 @@ const ball = (c, r, P, tone = "lo") => S(G.sphereOf(c, r, P, { steps: 12 }), { t
 // Items for the painter: each segment and joint with its centre. `extra` styles: { lit: [names] }.
 export function drawMannequin(P, s, { plates = true, board = null, cg = false } = {}) {
   const items = [];
-  const put = (mid, svg, bias = 0) => items.push({ mid, svg, bias });
+  // each part sits in a .ws-sailor group, so highlights on the board and rig leave the sailor alone
+  const put = (mid, svg, bias = 0) => items.push({ mid, svg: `<g class="ws-sailor">${svg}</g>`, bias });
   const r = { thigh: 3.3, knee: 2.7, shank: 2.5, ankle: 1.9, upper: 2.3, elbow: 1.9, fore: 1.8, wrist: 1.4 };
   // foot plates on the deck: placement reads from above
   if (plates && board) {

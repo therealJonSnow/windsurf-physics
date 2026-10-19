@@ -3,6 +3,9 @@
 // so the only start that stays put is the board across the wind with the rig downwind, square to it.
 import { k, G } from "../../packages/windsurf/kit.mjs";
 import { floatInfo } from "../../packages/windsurf/physics/rig-water.mjs";
+import { C } from "../../packages/windsurf/physics/constants.mjs";
+import { uphaulPosture } from "../../packages/windsurf/physics/sailor.mjs";
+import { skeleton, poseUphaul, drawMannequin } from "../../packages/windsurf/mannequin.mjs";
 import { MAST_FOOT } from "../../packages/windsurf/physics/sail.mjs";
 import { makeBoard, drawRig, assemble, boardProjection } from "../../packages/windsurf/rig.mjs";
 import { makeTank, makeFan, makeTelltale, makeConsole, bench } from "../../packages/windsurf/bench.mjs";
@@ -42,11 +45,18 @@ export function staticFront() {
 }
 
 // The board and the floating rig. heading: degrees off the wind; rho: the rig's angle from downwind.
+// The sailor squats at the mast foot, facing the rig, holding the uphaul ready to lift: F2's starting
+// posture (legs bent, back straight, arms long along the line), turned to wherever the rig lies.
 export function scene(heading, rho, rate = 0) {
   const Pb = boardP(heading);
   const info = floatInfo(heading, rho, rate);
-  const rig = drawRig(Pb, info.frame, BOARD, { camber: 0, water: TANK.Zw, litCe: false });
-  return { svg: assemble(Pb, BOARD, rig, [], { straps: true }), info };
+  const m = info.frame.m, flat = Math.hypot(m[0], m[1]);
+  const d = [m[0] / flat, m[1] / flat, 0];                         // the way the rig lies, level
+  const attach = [C.uphaulAt * Math.cos(info.slope), C.uphaulAt * Math.sin(info.slope)];
+  const pose = poseUphaul(uphaulPosture("legs", 0, attach), d, BOARD);
+  const rig = drawRig(Pb, info.frame, BOARD, { camber: 0, water: TANK.Zw, litCe: false, uphaul: { hands: pose.grip } });
+  const items = drawMannequin(Pb, skeleton(pose.spec), { board: BOARD });
+  return { svg: assemble(Pb, BOARD, rig, items, { straps: true }), info };
 }
 
 // Screen point → world point on the water (z = Zw).
