@@ -34,7 +34,8 @@
     "held": "held",
     "rest": "settled",
     "ready": "waiting",
-    "square": "square, keep it there"
+    "square": "square, keep it there",
+    "limit": "feet in the way"
   },
   "why": {
     "swing": "The wind's drag on the floating rig acts {lever} m out along the mast, so it turns the rig about the mast foot with {torque} N·m, toward downwind. The water slows the swing.",
@@ -42,7 +43,8 @@
     "rest": "The rig has settled downwind, where the wind has no lever on it, but the board is {board}° to the wind. Turn the board across the wind so the rig lies square to it.",
     "deck": "The mast lies across the deck. The wet sail's friction on the pad holds up to {hold} N·m, more than the wind's {torque} N·m, so the rig stays on the board: you would be pulling it up over the deck.",
     "ready": "The rig is lying on the water where it fell. Grab the board to start: as soon as you do, the wind starts swinging the rig downwind about the mast foot.",
-    "square": "Good: the board is square to the rig. Keep it square as the wind swings the rig round. When the rig has come downwind the board will be across the wind ({board}° now, 90° wanted) and you have the T."
+    "square": "Good: the board is square to the rig. Keep it square as the wind swings the rig round. When the rig has come downwind the board will be across the wind ({board}° now, 90° wanted) and you have the T.",
+    "limit": "That's as far as the board turns under you: with your feet planted either side of the mast foot and your body turned to the rig, it can only come {limit}° either side of square. Let the rig come round to you."
   },
   "tasks": [
     {

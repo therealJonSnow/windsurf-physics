@@ -14,6 +14,9 @@ const R = Math.PI / 180;
 const N = (v) => Math.round(Math.abs(v));
 const HOLD = 2;                                          // seconds in the T, rig settled, to win
 const SETTLED = 0.03;                                    // rad/s: the rig counts as settled below this
+// With the sailor standing on the board facing the rig, the board can only turn so far under them before
+// their feet and the twist of their body stop it: the rig stays within this many degrees of square.
+const LIMIT = 45;
 
 export function mount(root, { captions, store = false }) {
   const fig = createFigure(root, { id: "f1-t-position", captions, store, tour: false });
@@ -28,6 +31,15 @@ export function mount(root, { captions, store = false }) {
   // the game: "ready" (frozen, waiting for a grab), "playing", "won" (still playable until reset)
   let phase = "ready", clock = 0, held = 0, wonAt = 0, best = null;
   const drawn = { heading: NaN, rho: NaN, go: null };
+  let limited = true, side = 1, atLimit = false, limitUntil = -1;         // side: which side of the board the rig is on (+ port)
+  // the board heading that keeps the rig within LIMIT of square, on its side; phi = 180 − heading + rho
+  const clampHeading = (h) => {
+    if (!limited) return h;
+    const phi = wrap(180 - h + state.rho);
+    const lo = side * 90 - LIMIT, hi = side * 90 + LIMIT;
+    const kept = Math.min(hi, Math.max(lo, phi));
+    return h + (phi - kept);
+  };
 
   const boardAngle = () => N(Math.abs(wrap(heading)));                          // 0 nose to wind … 180 nose downwind
   const rigAngle = (i) => N(Math.abs(wrap(i.phi)));
@@ -43,8 +55,15 @@ export function mount(root, { captions, store = false }) {
   function say(html) { taskEl.innerHTML = html; taskEl.hidden = !html; }
 
   function reset() {
+    // a start the sailor could stand in: the rig off square by 15–40°, on either side, and well off downwind
     let h, r;
-    do { h = 20 + Math.random() * 320; r = -150 + Math.random() * 300; } while (floatInfo(h, r).tPosition || floatInfo(h, r).onDeck || Math.abs(r) < 25);
+    do {
+      side = Math.random() < 0.5 ? 1 : -1;
+      r = (Math.random() < 0.5 ? 1 : -1) * (30 + Math.random() * 120);
+      const phi = side * (90 + (Math.random() < 0.5 ? 1 : -1) * (15 + Math.random() * 25));
+      h = ((180 + r - phi) % 360 + 360) % 360;
+    } while (floatInfo(h, r).tPosition || floatInfo(h, r).onDeck);
+    limited = true;
     heading = headingTarget = state.heading = h;
     state.rho = r;
     state.rate = 0;
@@ -69,6 +88,7 @@ export function mount(root, { captions, store = false }) {
   function stateWord(i) {
     if (phase === "ready") return S.ready;
     if (i.tPosition) return S.t;
+    if (atLimit && limited) return S.limit;
     if (i.square <= T_BAND) return S.square;
     if (i.onDeck && Math.abs(state.rate) < 0.005) return S.deck;
     if (Math.abs(state.rate) > 0.01) return S.swing;
@@ -81,6 +101,7 @@ export function mount(root, { captions, store = false }) {
     const torque = Math.abs(i.wind).toFixed(1);
     let why;
     if (phase === "ready") why = W.ready;
+    else if (atLimit && limited && !i.tPosition) why = fill(W.limit, { limit: LIMIT });
     else if (i.tPosition) why = W.t;
     else if (i.square <= T_BAND) why = fill(W.square, { board: boardAngle() });
     else if (word === S.deck) why = fill(W.deck, { hold: i.hold.toFixed(1), torque });
@@ -94,12 +115,27 @@ export function mount(root, { captions, store = false }) {
     const live = phase !== "ready" || fig.replay;
     const ease = (v, t, s) => (calm ? t : Math.abs(t - v) < 0.01 ? t : v + (t - v) * (1 - Math.exp(-dt / s)));
     // the board turns toward its target, carrying the mast foot; the rig stays where the water holds it
+    // turning past the limit is stopped; "feet in the way" shows for a moment after each stop
+    const asked = headingTarget;
+    headingTarget = clampHeading(headingTarget);
+    if (Math.abs(asked - headingTarget) > 0.01) limitUntil = fig.clock + 0.8;
     heading = ease(heading, headingTarget, 0.35);
     state.heading = heading;
     if (live) {
       if (calm) { for (let i = 0; i < 300; i++) floatStep(state, 0.1); state.rate = 0; }
       info = floatStep(state, calm ? 0 : dt);
     } else info = floatInfo(heading, state.rho, 0);
+    // a rig that swings past the limit carries the board round with it
+    if (limited) {
+      const kept = clampHeading(heading);
+      if (Math.abs(kept - heading) > 1e-6) {
+        headingTarget += kept - heading;
+        heading = state.heading = kept;
+        info = floatInfo(heading, state.rho, state.rate);
+        limitUntil = fig.clock + 0.8;
+      }
+    }
+    atLimit = limited && fig.clock < limitUntil;
     if (phase === "playing") {
       clock += dt;
       held = info.tPosition && Math.abs(state.rate) < SETTLED ? held + dt : 0;
@@ -173,6 +209,7 @@ export function mount(root, { captions, store = false }) {
   fig.tasks = [{ ok: () => Math.abs(wrap(heading)) < 15 && info.onDeck && Math.abs(state.rate) < 0.01 }];
   fig.onTask = (i) => {
     if (i < 0) { targetEl.style.opacity = "0"; reset(); return; }
+    limited = false;                                     // the challenge lets the rig swing over the deck
     heading = headingTarget = state.heading = 90;
     state.rho = 0; state.rate = 0;
     phase = "playing"; clock = 0; held = 0;
@@ -185,6 +222,7 @@ export function mount(root, { captions, store = false }) {
   // ---- mistake: the rig starts upwind of the board ----
   fig.onMistake = () => {
     targetEl.style.opacity = "0";
+    limited = false;                                     // the replay lets the rig swing over the deck
     heading = headingTarget = state.heading = 90;
     state.rho = 176; state.rate = 0;
     phase = "playing"; clock = 0; held = 0;
