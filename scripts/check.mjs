@@ -42,12 +42,20 @@ const steerF3 = (goal) => ["eval", `(() => { clearInterval(window.__steer); wind
 
 const PLAN = {
   "f1-t-position": {
-    poses: [[keys("ArrowUp", 8), ["wait", 300]], [setRange("board", 0), ["wait", 7000]], [["click", "[data-mistake]"], ["wait", 5000]]],
+    // the game: nothing moves until the board is grabbed; then keep it square to the rig until it wins
+    poses: [[keys("ArrowLeft", 4), ["wait", 1500]], [setRange("board", 0), ["wait", 7000]], [["click", "[data-mistake]"], ["wait", 5000]]],
     tasks: [
-      [["click", '[data-lesson="0"]'], ["wait", 200], setRange("board", 90), ["eval", `(() => { const p = ${stage}.__fig.probe(); const n = Math.round(p.rho / 5); for (let i = 0; i < Math.abs(n); i++) ${stage}.dispatchEvent(new KeyboardEvent('keydown', { key: n > 0 ? 'ArrowDown' : 'ArrowUp', bubbles: true })); return n; })()`], done('[data-lesson="0"]', 30000)],
-      [["click", '[data-lesson="1"]'], ["wait", 200], setRange("board", 0), done('[data-lesson="1"]', 30000)],
+      [["eval", `(() => { const a = ${stage}.__fig.probe(); return new Promise((r) => setTimeout(() => { const b = ${stage}.__fig.probe(); r(a.phase === 'ready' && b.phase === 'ready' && a.rho === b.rho ? 'frozen' : 'MOVED'); }, 1500)); })()`],
+       ["eval", `(() => { window.__play = setInterval(() => { const p = ${stage}.__fig.probe(); const want = 180 + p.rho; const h = [want - 90, want + 90].map((v) => v + 360 * Math.round((p.heading - v) / 360)).sort((a, b) => Math.abs(a - p.heading) - Math.abs(b - p.heading))[0]; const s = document.querySelector('[data-ctl=board]'); s.value = String(((Math.round(h) % 360) + 360) % 360); s.dispatchEvent(new Event('input')); }, 120); return 'playing'; })()`],
+       ["until", `${stage}.__fig.probe().t && document.querySelector('[data-part=board]').classList.contains('ws-go')`, 30000],
+       ["until", `${stage}.__fig.probe().phase === 'won'`, 40000],
+       ["eval", "clearInterval(window.__play)"], ["click", "[data-act=reset]"], ["wait", 300],
+       ["until", `${stage}.__fig.probe().phase === 'ready'`, 2000]],
+      [["click", '[data-lesson="0"]'], ["wait", 200], setRange("board", 0), done('[data-lesson="0"]', 30000)],
     ],
     mistake: 40000,
+    // no idle tour in the game: play it, so the sheet and the redraw cost see the parts moving
+    sheet: [["eval", `(() => { window.__play = setInterval(() => { const p = ${stage}.__fig.probe(); const want = 180 + p.rho; const h = [want - 90, want + 90].map((v) => v + 360 * Math.round((p.heading - v) / 360)).sort((a, b) => Math.abs(a - p.heading) - Math.abs(b - p.heading))[0]; const s = document.querySelector('[data-ctl=board]'); s.value = String(((Math.round(h) % 360) + 360) % 360); s.dispatchEvent(new Event('input')); }, 120); return 'playing'; })()`]],
   },
   "f2-uphaul": {
     poses: [[keys(" ", 1), ["wait", 2500]], [["wait", 6000]], [keys("b", 1), keys("3", 1), keys(" ", 1), ["wait", 450]]],
@@ -86,13 +94,13 @@ for (const id of ids) {
   }
   plan.tasks.forEach((task, i) => {
     const r = drive(page("light"), [["wait", 600], ...task, ["eval", "document.querySelector('[data-task]').textContent.slice(0, 80)"]]);
-    record(id, `challenge ${i + 1} passes`, r.code === 0 && !/timed out/i.test(r.out));
+    record(id, `challenge ${i + 1} passes`, r.code === 0 && !/timed out|MOVED/i.test(r.out));
   });
   const m = drive(page("light"), [["wait", 600], ["click", "[data-mistake]"], done("[data-mistake]", plan.mistake)]);
   record(id, "mistake replay runs to its end", m.code === 0 && !/timed out/i.test(m.out));
-  const sheet = drive(page("light"), [["wait", 1200], ["sheet", join(SHOTS, `${id}-tour.png`), 1400, 8, null, 0.5], ["eval", `${stage}.__fig.drawCost`]]);
+  const sheet = drive(page("light"), [["wait", 1200], ...(plan.sheet || []), ["sheet", join(SHOTS, `${id}-tour.png`), 1400, 8, null, 0.5], ["eval", `${stage}.__fig.drawCost`]]);
   const cost = Number((sheet.out.match(/eval: ([\d.]+)/) || [0, NaN])[1]);
-  record(id, "idle-tour contact sheet", sheet.code === 0, `shots/${id}-tour.png · read it`);
+  record(id, plan.sheet ? "play contact sheet" : "idle-tour contact sheet", sheet.code === 0, `shots/${id}-tour.png · read it`);
   record(id, "redraw under 25 ms", cost < 25, `${cost.toFixed(1)} ms`);
 }
 const failed = results.filter((r) => !r.ok);

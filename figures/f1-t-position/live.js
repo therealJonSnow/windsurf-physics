@@ -1,30 +1,38 @@
-// F1 · the page: turn the board, swing the rig, let the wind settle it. Everything comes from floatStep.
+// F1 · the page, as a game. The board and rig start somewhere new and wait. Nothing moves until the
+// learner grabs the board; then the wind swings the floating rig downwind and the learner keeps the
+// board square to it. Board and rig light up green while they are in the T-position (±10°); holding it
+// for 2 s once the rig has settled wins. The learner can keep playing until Reset puts them somewhere new.
+// Everything comes from floatStep.
 import { createFigure, fill } from "../../packages/windsurf/ui.js";
-import { floatStep, floatInfo, wrap, rigToBoard, downwindAngle, T_BAND } from "../../packages/windsurf/physics/rig-water.mjs";
+import { floatStep, floatInfo, wrap, T_BAND } from "../../packages/windsurf/physics/rig-water.mjs";
 import { onHull } from "../../packages/windsurf/physics/hull.mjs";
 import { C } from "../../packages/windsurf/physics/constants.mjs";
-import { MAST_FOOT, toM } from "../../packages/windsurf/physics/sail.mjs";
+import { MAST_FOOT } from "../../packages/windsurf/physics/sail.mjs";
 import { P, FAN, TELL, CONSOLE, WIND_TO, scene, toWater, rimMark, yawOf } from "./figure.mjs";
 
 const R = Math.PI / 180;
 const N = (v) => Math.round(Math.abs(v));
+const HOLD = 2;                                          // seconds in the T, rig settled, to win
+const SETTLED = 0.03;                                    // rad/s: the rig counts as settled below this
 
 export function mount(root, { captions, store = false }) {
-  const fig = createFigure(root, { id: "f1-t-position", captions, store });
+  const fig = createFigure(root, { id: "f1-t-position", captions, store, tour: false });
   const $ = fig.$;
   const boardEl = $('[data-part="board"]'), bladesEl = $('[data-part="blades"]'), pennantEl = $('[data-part="pennant"]');
   const pointers = [$('[data-part="pointer0"]'), $('[data-part="pointer1"]')];
-  const targetEl = $('[data-part="target"]');
-  const W = captions.why, S = captions.states;
+  const targetEl = $('[data-part="target"]'), taskEl = $("[data-task]");
+  const W = captions.why, S = captions.states, G = captions.game;
 
   const state = { heading: 90, rho: 60, rate: 0 };
-  let heading = 90, headingTarget = 90, held = false, rhoTarget = 60, fan = 0, info = floatInfo(90, 60);
-  const drawn = { heading: NaN, rho: NaN };
+  let heading = 90, headingTarget = 90, fan = 0, info = floatInfo(90, 60);
+  // the game: "ready" (frozen, waiting for a grab), "playing", "won" (still playable until reset)
+  let phase = "ready", clock = 0, held = 0, wonAt = 0, best = null;
+  const drawn = { heading: NaN, rho: NaN, go: null };
 
   const boardAngle = () => N(Math.abs(wrap(heading)));                          // 0 nose to wind … 180 nose downwind
   const rigAngle = (i) => N(Math.abs(wrap(i.phi)));
-  const sBoard = fig.slider("board", { get: () => headingTarget, set: (v) => { headingTarget = v; }, format: (v) => fill(captions.controls.board.value, { deg: N(Math.abs(wrap(v))) }) });
-  fig.button("reset", () => { randomStart(); fig.steer(); });
+  const sBoard = fig.slider("board", { get: () => headingTarget, set: (v) => { start(); headingTarget = v; }, format: (v) => fill(captions.controls.board.value, { deg: N(Math.abs(wrap(v))) }) });
+  fig.button("reset", () => reset());
 
   const draw = fig.throttle(() => {
     boardEl.innerHTML = scene(heading, state.rho, state.rate).svg;
@@ -32,20 +40,47 @@ export function mount(root, { captions, store = false }) {
     drawn.rho = state.rho;
   });
 
+  function say(html) { taskEl.innerHTML = html; taskEl.hidden = !html; }
+
+  function reset() {
+    let h, r;
+    do { h = 20 + Math.random() * 320; r = -150 + Math.random() * 300; } while (floatInfo(h, r).tPosition || floatInfo(h, r).onDeck || Math.abs(r) < 25);
+    heading = headingTarget = state.heading = h;
+    state.rho = r;
+    state.rate = 0;
+    phase = "ready"; clock = 0; held = 0;
+    drawn.heading = NaN;
+    info = floatInfo(heading, state.rho);
+    fig.stage.classList.add("ws-ready");
+    say(G.ready);
+    fig.announce(G.readyShort);
+    fig.run();
+  }
+  // the first grab of the board (pointer, slider or keys) starts the clock and the physics
+  function start() {
+    if (phase !== "ready") return;
+    phase = "playing";
+    clock = 0; held = 0;
+    fig.stage.classList.remove("ws-ready");
+    say(G.playing);
+    fig.announce(G.playingShort);
+  }
+
   function stateWord(i) {
-    if (held) return S.held;
-    if (i.tPosition && Math.abs(state.rate) < 0.02) return S.t;
+    if (phase === "ready") return S.ready;
+    if (i.tPosition) return S.t;
     if (i.onDeck && Math.abs(state.rate) < 0.005) return S.deck;
     if (Math.abs(state.rate) > 0.01) return S.swing;
     return S.rest;
   }
   function words(i, now) {
     const word = stateWord(i);
-    fig.readout(fill(captions.readout, { board: boardAngle(), rig: rigAngle(i), state: word }));
+    const extra = phase === "playing" ? (i.tPosition && Math.abs(state.rate) < SETTLED ? fill(G.holding, { held: held.toFixed(1), hold: HOLD }) : fill(G.timer, { t: clock.toFixed(1) })) : phase === "won" ? fill(G.wonShort, { t: wonAt.toFixed(1) }) : "";
+    fig.readout(fill(captions.readout, { board: boardAngle(), rig: rigAngle(i), state: word }) + (extra ? ` · ${extra}` : ""));
     const torque = Math.abs(i.wind).toFixed(1);
     let why;
-    if (held) why = fill(W.held, { rho: N(state.rho), torque });
-    else if (word === S.t) why = W.t;
+    if (phase === "ready") why = W.ready;
+    else if (i.tPosition) why = W.t;
     else if (word === S.deck) why = fill(W.deck, { hold: i.hold.toFixed(1), torque });
     else if (word === S.swing) why = fill(W.swing, { lever: C.floatDragLever.toFixed(1), torque });
     else why = fill(W.rest, { board: boardAngle() });
@@ -53,36 +88,30 @@ export function mount(root, { captions, store = false }) {
     fig.value(boardAngle(), `Board ${boardAngle()} degrees to the wind, rig ${rigAngle(i)} degrees to the board, ${word}.`);
   }
 
-  function randomStart() {
-    let h, r;
-    do { h = 20 + Math.random() * 320; r = -150 + Math.random() * 300; } while (floatInfo(h, r).tPosition || floatInfo(h, r).onDeck);
-    heading = headingTarget = state.heading = h;
-    state.rho = rhoTarget = r;
-    state.rate = 0;
-    drawn.heading = NaN;
-  }
-
-  // idle tour: turn the board toward goals and, now and then, push the rig off downwind and let go
-  const TOUR = [{ heading: 90, push: -60, for: 9 }, { heading: 35, push: -50, for: 9 }, { heading: 140, push: 70, for: 9 }, { heading: 90, push: 40, for: 10 }];
-  let tourStep = -1;
-  function tour() {
-    const total = TOUR.reduce((a, s) => a + s.for, 0);
-    let x = fig.tourClock % total, i = 0;
-    while (x >= TOUR[i].for) { x -= TOUR[i].for; i++; }
-    if (i !== tourStep) { tourStep = i; rhoTarget = TOUR[i].push; }
-    headingTarget = TOUR[i].heading;
-    held = x < 1.6;                                      // hold the rig off downwind, then let go
-  }
-
   fig.onTick = (dt, now, calm) => {
-    if (fig.touring && !fig.replay) tour();
+    const live = phase !== "ready" || fig.replay;
     const ease = (v, t, s) => (calm ? t : Math.abs(t - v) < 0.01 ? t : v + (t - v) * (1 - Math.exp(-dt / s)));
     // the board turns toward its target, carrying the mast foot; the rig stays where the water holds it
-    heading = ease(heading, headingTarget, 0.5);
+    heading = ease(heading, headingTarget, 0.35);
     state.heading = heading;
-    if (held) state.rho = wrap(state.rho + wrap(rhoTarget - state.rho) * (calm ? 1 : 1 - Math.exp(-dt / 0.35)));
-    if (calm && !held) { for (let i = 0; i < 300; i++) floatStep(state, 0.1); state.rate = 0; }
-    info = floatStep(state, calm ? 0 : dt, { held });
+    if (live) {
+      if (calm) { for (let i = 0; i < 300; i++) floatStep(state, 0.1); state.rate = 0; }
+      info = floatStep(state, calm ? 0 : dt);
+    } else info = floatInfo(heading, state.rho, 0);
+    if (phase === "playing") {
+      clock += dt;
+      held = info.tPosition && Math.abs(state.rate) < SETTLED ? held + dt : 0;
+      if (held >= HOLD) {
+        phase = "won";
+        wonAt = clock;
+        best = best == null ? clock : Math.min(best, clock);
+        say(fill(G.won, { t: clock.toFixed(1), best: best.toFixed(1) }));
+        fig.announce(fill(G.wonShort, { t: clock.toFixed(1) }));
+        progressPass();
+      }
+    }
+    const go = Boolean(info.tPosition) && phase !== "ready";
+    if (go !== drawn.go) { boardEl.classList.toggle("ws-go", go); drawn.go = go; }
     if (Math.abs(heading - drawn.heading) > 0.1 || Math.abs(wrap(state.rho - drawn.rho)) > 0.1) draw(now, calm || Math.abs(state.rate) < 1e-3);
     fan += dt * (calm ? 0 : 14);
     bladesEl.innerHTML = FAN.blades(P, fan);
@@ -95,8 +124,10 @@ export function mount(root, { captions, store = false }) {
     words(info, now);
     return true;
   };
+  // winning the game counts as the T challenge on the saved progress
+  const progressPass = () => fig.progress.pass("f1-t");
 
-  // ---- pointer: drag the board by its hull, or the rig anywhere else ----
+  // ---- pointer: grab the board by its hull and turn it about the mast foot ----
   let grab = null;
   const svg = fig.stage.querySelector("svg");
   const worldAt = (e) => {
@@ -110,49 +141,37 @@ export function mount(root, { captions, store = false }) {
     return [MAST_FOOT + x * Math.cos(a) + y * Math.sin(a), -x * Math.sin(a) + y * Math.cos(a)];
   };
   fig.stage.addEventListener("pointerdown", (e) => {
+    if (fig.replay) return;
     const w = worldAt(e);
-    if (Math.hypot(w[0], w[1]) > 290) return;
-    grab = onHull(toBoard(w), -6) ? { what: "board", from: angleAt(w), heading: headingTarget } : { what: "rig" };
+    if (!onHull(toBoard(w), -8)) return;               // only the board can be grabbed
+    grab = { from: angleAt(w), heading: headingTarget };
+    start();
+    fig.stage.classList.add("ws-grabbing");
     try { fig.stage.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
-    move(e);
     fig.steer();
   });
-  const move = (e) => {
+  fig.stage.addEventListener("pointermove", (e) => {
     if (!grab) return;
-    const w = worldAt(e), a = angleAt(w);
-    if (grab.what === "board") headingTarget = grab.heading + wrap(a - grab.from);
-    else { held = true; rhoTarget = wrap(a - WIND_TO); }
+    headingTarget = grab.heading + wrap(angleAt(worldAt(e)) - grab.from);
     fig.steer();
-  };
-  fig.stage.addEventListener("pointermove", move);
-  for (const name of ["pointerup", "pointercancel"]) fig.stage.addEventListener(name, () => { grab = null; held = false; fig.run(); });
+  });
+  for (const name of ["pointerup", "pointercancel"]) fig.stage.addEventListener(name, () => { grab = null; fig.stage.classList.remove("ws-grabbing"); fig.run(); });
 
   fig.keys({
-    ArrowRight: (e) => { headingTarget -= e.shiftKey ? 10 : 2; },
-    ArrowLeft: (e) => { headingTarget += e.shiftKey ? 10 : 2; },
-    ArrowUp: (e) => { state.rho = wrap(state.rho + (e.shiftKey ? 20 : 5)); state.rate = 0; },
-    ArrowDown: (e) => { state.rho = wrap(state.rho - (e.shiftKey ? 20 : 5)); state.rate = 0; },
-    Home: () => randomStart(),
+    ArrowRight: (e) => { start(); headingTarget -= e.shiftKey ? 10 : 2; },
+    ArrowLeft: (e) => { start(); headingTarget += e.shiftKey ? 10 : 2; },
+    Home: () => reset(),
   });
-  fig.onSteer = (resumed) => { if (!resumed) { /* the reader has it */ } else held = false; };
 
-  // ---- challenges ----
-  fig.tasks = [
-    { ok: () => info.tPosition && Math.abs(state.rate) < 0.03 && !held },
-    { ok: () => Math.abs(wrap(heading)) < 15 && info.onDeck && Math.abs(state.rate) < 0.01 && !held },
-  ];
+  // ---- challenge: nose to wind ----
+  fig.tasks = [{ ok: () => Math.abs(wrap(heading)) < 15 && info.onDeck && Math.abs(state.rate) < 0.01 }];
   fig.onTask = (i) => {
-    held = false;
-    if (i < 0) { targetEl.style.opacity = "0"; return; }
-    if (i === 0) {
-      randomStart();
-      // mark both places across the wind on the rim, where the nose may point
-      targetEl.setAttribute("d", rimMark(WIND_TO + 90, 2 * T_BAND) + rimMark(WIND_TO - 90, 2 * T_BAND).replace(/^M/, "M"));
-    } else {
-      heading = headingTarget = state.heading = 90;
-      state.rho = 0; state.rate = 0;
-      targetEl.setAttribute("d", rimMark(WIND_TO + 180, 30));
-    }
+    if (i < 0) { targetEl.style.opacity = "0"; reset(); return; }
+    heading = headingTarget = state.heading = 90;
+    state.rho = 0; state.rate = 0;
+    phase = "playing"; clock = 0; held = 0;
+    fig.stage.classList.remove("ws-ready");
+    targetEl.setAttribute("d", rimMark(WIND_TO + 180, 30));
     drawn.heading = NaN;
     targetEl.style.opacity = "1";
   };
@@ -160,9 +179,10 @@ export function mount(root, { captions, store = false }) {
   // ---- mistake: the rig starts upwind of the board ----
   fig.onMistake = () => {
     targetEl.style.opacity = "0";
-    held = false;
     heading = headingTarget = state.heading = 90;
     state.rho = 176; state.rate = 0;
+    phase = "playing"; clock = 0; held = 0;
+    fig.stage.classList.remove("ws-ready");
     drawn.heading = NaN;
     let t = 0, stuck = 0;
     return {
@@ -174,7 +194,8 @@ export function mount(root, { captions, store = false }) {
     };
   };
 
-  fig.probe = () => ({ heading, rho: state.rho, rate: state.rate, phi: info.phi, onDeck: info.onDeck, t: info.tPosition });
+  fig.probe = () => ({ heading, rho: state.rho, rate: state.rate, phi: info.phi, onDeck: info.onDeck, t: info.tPosition, phase, held });
+  reset();
   draw(performance.now(), true);
   words(info, 0);
   fig.run();

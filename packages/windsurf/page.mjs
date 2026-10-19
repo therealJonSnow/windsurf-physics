@@ -18,6 +18,14 @@ export const WS_CSS = `
 .ws-target{stroke-width:2.2}
 .ws-lever{stroke-width:1.4}
 .ws-wake{fill:none;stroke:var(--anatomy-lo);stroke-width:.6}
+.ws-root{--ws-go:#30a46c;--ws-go-fill:#e3f4ea;--ws-go-shade:#cfe9d9}
+.ws-root[data-theme="dark"]{--ws-go:#6be0a0;--ws-go-fill:#123222;--ws-go-shade:#0e281b}
+.ws-go .iso-solid>.iso-fill,.ws-go .iso-solid>.iso-top,.ws-go .tb-body,.ws-go .tb-shine{fill:var(--ws-go-fill)}
+.ws-go .iso-solid>.iso-shade[data-shade],.ws-go .tb-shade{fill:var(--ws-go-shade)}
+.ws-go .iso-edge,.ws-go .tb-edge{stroke:var(--ws-go)}
+.ws-go .iso-solid[data-seamless]>.iso-shade,.ws-go .iso-solid[data-seamless]>.iso-top{stroke:var(--ws-go-fill)}
+.ws-ready{cursor:grab}
+.ws-grabbing{cursor:grabbing}
 .iso-stage{outline:none;cursor:ew-resize}
 .iso-stage:focus-visible{outline:1px solid var(--anatomy-muted);outline-offset:6px}
 .ws-panel{margin:18px 0 26px;display:grid;gap:14px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--anatomy-text)}

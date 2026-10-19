@@ -8,7 +8,7 @@ Built with the [Anatomy skill](https://github.com/wheresryan22/anatomy) (MIT). I
 
 | Figure | Idea | Review pages |
 | --- | --- | --- |
-| F1 T-position weathervane | A rig lying flat on the water, hinged at the mast foot, swings downwind like a weathervane. The only start that stays put is the board across the wind with the rig downwind, square to it. | `figures/f1-t-position/f1-t-position.html` (`-light`, `-dark`) |
+| F1 T-position weathervane | A game. Nothing moves until you grab the board; then the wind swings the floating rig downwind and you keep the board square to it. Board and rig turn green in the T-position (±10°); holding it for 2 s with the rig settled wins. Reset puts them somewhere new and waits for the next grab. | `figures/f1-t-position/f1-t-position.html` (`-light`, `-dark`) |
 | F2 Uphaul load | The pull is hardest at the start, while water lies on the sail and the line's lever is short. Pulling slowly with the legs lets the water drain and spares the back. | `figures/f2-uphaul/f2-uphaul.html` |
 | F3 Base position steering | With the sail flagging, tilting the rig toward the nose or the tail moves the sail's push ahead of or behind the centreboard and turns the board. | `figures/f3-base-position/f3-base-position.html` |
 

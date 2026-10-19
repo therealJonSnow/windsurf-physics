@@ -25,7 +25,7 @@ export function svgBody() {
 
 export const CONTROLS = [
   { type: "range", name: "board", label: "Board", min: 0, max: 360, step: 1, value: 90 },
-  { type: "buttons", name: "rig", label: "Rig", buttons: [{ name: "reset", label: "New start" }] },
+  { type: "buttons", name: "rig", label: "Rig", buttons: [{ name: "reset", label: "Reset" }] },
 ];
 
 export async function build(options = {}) {

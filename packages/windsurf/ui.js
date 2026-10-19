@@ -27,7 +27,7 @@ export function progressStore(namespace, enabled) {
 // Fill a template like "The sail pushes {drag} N" from values.
 export const fill = (template, values) => template.replace(/\{(\w+)\}/g, (_, name) => (values[name] ?? `{${name}}`));
 
-export function createFigure(root, { id, captions, store = false }) {
+export function createFigure(root, { id, captions, store = false, tour = true }) {
   const $ = (sel) => root.querySelector(sel);
   const $$ = (sel) => [...root.querySelectorAll(sel)];
   const stage = $(".iso-stage");
@@ -41,7 +41,7 @@ export function createFigure(root, { id, captions, store = false }) {
   const fig = {
     root, stage, still, captions, progress, $, $$,
     clock: 0, visible: true, frame: 0, last: 0,
-    touring: !still.matches, tourClock: 0, idleTimer: 0,
+    touring: tour && !still.matches, tourClock: 0, idleTimer: 0,
     task: -1, held: 0, passed: false,
     replay: null,
     onTick: () => true,
@@ -100,13 +100,13 @@ export function createFigure(root, { id, captions, store = false }) {
     }, { rootMargin: "120px 0px" }).observe(stage);
   } catch { fig.visible = true; }
   document.addEventListener("visibilitychange", () => { if (!document.hidden) fig.run(); });
-  still.addEventListener?.("change", () => { fig.touring = !still.matches && fig.task < 0; fig.run(); });
+  still.addEventListener?.("change", () => { fig.touring = tour && !still.matches && fig.task < 0; fig.run(); });
 
   // ---- the reader takes over: stop the tour, resume it after a quiet spell ----
   fig.steer = () => {
     fig.touring = false;
     clearTimeout(fig.idleTimer);
-    if (fig.task < 0 && !fig.replay)
+    if (tour && fig.task < 0 && !fig.replay)
       fig.idleTimer = setTimeout(() => {
         fig.touring = !still.matches && fig.task < 0 && !fig.replay;
         fig.tourClock = 0;
