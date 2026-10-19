@@ -9,7 +9,7 @@
   "keys": [
     {
       "mark": "green",
-      "label": "Board and rig in the T-position (±10°)"
+      "label": "Board square to the rig (±10°); bolder once it's also across the wind: the T"
     },
     {
       "mark": "raised",
@@ -28,19 +28,21 @@
   },
   "readout": "board {board}° · rig {rig}° · {state}",
   "states": {
-    "t": "T-position",
+    "t": "T-position · go",
     "deck": "mast on the deck",
     "swing": "swinging",
     "held": "held",
     "rest": "settled",
-    "ready": "waiting"
+    "ready": "waiting",
+    "square": "square, keep it there"
   },
   "why": {
     "swing": "The wind's drag on the floating rig acts {lever} m out along the mast, so it turns the rig about the mast foot with {torque} N·m, toward downwind. The water slows the swing.",
     "t": "The rig lies downwind of the mast foot and the board is across the wind: the T-position. Once the rig has settled there the wind has no lever to turn it, so it stays put, on the right side to pull up.",
     "rest": "The rig has settled downwind, where the wind has no lever on it, but the board is {board}° to the wind. Turn the board across the wind so the rig lies square to it.",
     "deck": "The mast lies across the deck. The wet sail's friction on the pad holds up to {hold} N·m, more than the wind's {torque} N·m, so the rig stays on the board: you would be pulling it up over the deck.",
-    "ready": "The rig is lying on the water where it fell. Grab the board to start: as soon as you do, the wind starts swinging the rig downwind about the mast foot."
+    "ready": "The rig is lying on the water where it fell. Grab the board to start: as soon as you do, the wind starts swinging the rig downwind about the mast foot.",
+    "square": "Good: the board is square to the rig. Keep it square as the wind swings the rig round. When the rig has come downwind the board will be across the wind ({board}° now, 90° wanted) and you have the T."
   },
   "tasks": [
     {
@@ -61,7 +63,7 @@
   "game": {
     "ready": "<b>Grab the board to start.</b> The wind will swing the rig downwind. Keep the board square to the rig as it drifts, so the two make a T across the wind, and hold it there.",
     "readyShort": "Waiting. Grab the board to start.",
-    "playing": "<b>Keep the board square to the rig.</b> The board and rig turn green when they're in the T-position. Hold it there with the rig at rest for 2 seconds.",
+    "playing": "<b>Keep the board square to the rig.</b> The board and rig turn green while they're square, wherever the rig points. Hold it square as the wind swings the rig downwind; once it's across the wind too, that's the T: hold it for 2 seconds with the rig at rest.",
     "playingShort": "Started. Keep the board square to the rig.",
     "timer": "{t} s",
     "holding": "hold {held}/{hold} s",

@@ -69,6 +69,7 @@ export function mount(root, { captions, store = false }) {
   function stateWord(i) {
     if (phase === "ready") return S.ready;
     if (i.tPosition) return S.t;
+    if (i.square <= T_BAND) return S.square;
     if (i.onDeck && Math.abs(state.rate) < 0.005) return S.deck;
     if (Math.abs(state.rate) > 0.01) return S.swing;
     return S.rest;
@@ -81,6 +82,7 @@ export function mount(root, { captions, store = false }) {
     let why;
     if (phase === "ready") why = W.ready;
     else if (i.tPosition) why = W.t;
+    else if (i.square <= T_BAND) why = fill(W.square, { board: boardAngle() });
     else if (word === S.deck) why = fill(W.deck, { hold: i.hold.toFixed(1), torque });
     else if (word === S.swing) why = fill(W.swing, { lever: C.floatDragLever.toFixed(1), torque });
     else why = fill(W.rest, { board: boardAngle() });
@@ -110,8 +112,12 @@ export function mount(root, { captions, store = false }) {
         progressPass();
       }
     }
-    const go = Boolean(info.tPosition) && phase !== "ready";
-    if (go !== drawn.go) { boardEl.classList.toggle("ws-go", go); drawn.go = go; }
+    // green while the board is square to the rig, wherever the rig points; a stronger green once it is
+    // the full T (also across the wind): that is the moment to lift
+    const square = phase !== "ready" && info.square <= T_BAND;
+    const go = square && Boolean(info.tPosition);
+    const look = go ? "t" : square ? "square" : "";
+    if (look !== drawn.go) { boardEl.classList.toggle("ws-go", square); boardEl.classList.toggle("ws-go-t", go); drawn.go = look; }
     if (Math.abs(heading - drawn.heading) > 0.1 || Math.abs(wrap(state.rho - drawn.rho)) > 0.1) draw(now, calm || Math.abs(state.rate) < 1e-3);
     fan += dt * (calm ? 0 : 14);
     bladesEl.innerHTML = FAN.blades(P, fan);

@@ -24,6 +24,7 @@ export const WS_CSS = `
 .ws-go .iso-solid>.iso-shade[data-shade],.ws-go .tb-shade{fill:var(--ws-go-shade)}
 .ws-go .iso-edge,.ws-go .tb-edge{stroke:var(--ws-go)}
 .ws-go .iso-solid[data-seamless]>.iso-shade,.ws-go .iso-solid[data-seamless]>.iso-top{stroke:var(--ws-go-fill)}
+.ws-go-t .iso-edge,.ws-go-t .tb-edge{stroke-width:1.4}
 .ws-ready{cursor:grab}
 .ws-grabbing{cursor:grabbing}
 .iso-stage{outline:none;cursor:ew-resize}
