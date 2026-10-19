@@ -110,6 +110,32 @@ export function poseUphaul(posture, d, board) {
   return { spec: { pelvis, torso, facing: d, feet, hands, look: P2(posture.hands) }, grip };
 }
 
+// Squatting on the board, ready to uphaul, with the feet planted: the feet stay put on the deck either
+// side of the mast foot, along the centreline, and turn with the board; the hips stay over them, and
+// only the pelvis, torso and arms twist round to face the rig. d: the way the rig lies (board frame,
+// level); attach: the uphaul's tie point on the mast (board frame); posture: from uphaulPosture, for
+// the squat height, the lean back and the reach.
+export function poseUphaulPlanted(posture, d, attach, board) {
+  const side = d[1] >= 0 ? 1 : -1;                       // the rig's side of the board: the toes point that way
+  const feet = [1, -1].map((sgn) => {
+    const at = onDeck([MAST_FOOT + sgn * U(0.22), -side * U(0.04)], board.Zd);
+    return { at, dir: unit([sgn * 0.3, side, 0]) };
+  });
+  const mid = [(feet[0].at[0] + feet[1].at[0]) / 2, (feet[0].at[1] + feet[1].at[1]) / 2];
+  const back = U(Math.min(0.12, Math.abs(posture.hip[0] - posture.feet[0])));   // sitting back, away from the rig
+  const pelvis = [mid[0] - d[0] * back, mid[1] - d[1] * back, board.ZF + U(posture.hip[1])];
+  const r = (posture.lean * Math.PI) / 180;
+  const torso = unit(add(mul(d, Math.sin(r)), mul(UP, Math.cos(r))));
+  const shoulder = add(pelvis, mul(torso, SIZE.torso));
+  const to = sub(attach, shoulder);
+  const reach = Math.min(0.94 * (SIZE.upperArm + SIZE.forearm + 0.45 * SIZE.hand), len(to) - 3);
+  const dir = unit(to);
+  const grip = add(shoulder, mul(dir, reach));
+  const along = unit(cross(UP, d));
+  const hands = [add(add(grip, mul(dir, 2.2)), mul(along, 0.9)), add(add(grip, mul(dir, -2.2)), mul(along, -0.9))];
+  return { spec: { pelvis, torso, facing: d, feet, hands, look: attach }, grip };
+}
+
 // Base position: standing upwind of the mast foot, facing the rig, both hands on the mast below the boom,
 // arms long, leaning back a little against the rig. d: downwind (board frame); rig: the base frame.
 // The sailor steps toward the side the rig is tilted to, then finds the most upright lean and the grip
